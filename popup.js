@@ -10,6 +10,7 @@ const apiKeyInput   = document.getElementById('api-key-input');
 const saveKeyBtn    = document.getElementById('save-key-btn');
 const updateKeyLink = document.getElementById('update-key-link');
 const suggestionsEl = document.getElementById('suggestions');
+const resetBtn      = document.getElementById('reset-btn');
 const modePageBtn   = document.getElementById('mode-page-btn');
 const modeFreeBtn   = document.getElementById('mode-free-btn');
 const pageSection   = document.getElementById('page-section');
@@ -22,6 +23,24 @@ let apiKey = '';
 let pageContent = null;
 let activePort = null;
 let isFreeMode = false;
+
+// -- Persistence --
+
+const saveResult = (url, text) =>
+  chrome.storage.local.set({ savedUrl: url, savedResult: text });
+
+const clearResult = () =>
+  chrome.storage.local.remove(['savedUrl', 'savedResult']);
+
+const loadResult = () => new Promise(resolve =>
+  chrome.storage.local.get(['savedUrl', 'savedResult'], resolve)
+);
+
+const showResult = (text) => {
+  resultCard.hidden = false;
+  resultText.textContent = text;
+  resetBtn.hidden = false;
+};
 
 // Free mode quick-action chips
 const FREE_ACTIONS = [
@@ -160,6 +179,7 @@ const streamFromAI = (content, prompt, mode) => {
 
     let fullText = '';
     resultCard.hidden = false;
+    resetBtn.hidden = true;
     resultText.textContent = '';
 
     port.onMessage.addListener((msg) => {
@@ -171,6 +191,7 @@ const streamFromAI = (content, prompt, mode) => {
       if (msg.type === 'done') {
         port.disconnect();
         activePort = null;
+        resetBtn.hidden = false;
         resolve(fullText);
       }
       if (msg.type === 'error') {
@@ -240,8 +261,9 @@ const run = async (mode) => {
   try {
     const content = await getPageContent();
     setStatus('Streaming response…');
-    await streamFromAI(content, questionInput.value.trim(), mode);
+    const result = await streamFromAI(content, questionInput.value.trim(), mode);
     setStatus('Done.', 'success');
+    saveResult(content.url, result);
     if (mode === 'summarize') generateSuggestions(content);
   } catch (err) {
     setStatus(err.message, 'error');
@@ -289,14 +311,46 @@ freeInput.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); runFree(); }
 });
 
+// -- Reset --
+
+const doReset = async () => {
+  await clearResult();
+  pageContent = null;
+  resultCard.hidden = true;
+  resultText.textContent = '';
+  resetBtn.hidden = true;
+  suggestionsEl.hidden = true;
+  suggestionsEl.innerHTML = '';
+  questionInput.value = '';
+  setStatus('');
+  run('summarize');
+};
+
+resetBtn.addEventListener('click', doReset);
+
 // -- Init --
 
 (async () => {
   apiKey = await loadApiKey();
-  if (apiKey) {
-    keyCard.hidden = true;
-    mainCard.hidden = false;
-    updateKeyLink.hidden = false;
+  if (!apiKey) return;
+
+  keyCard.hidden = true;
+  mainCard.hidden = false;
+  updateKeyLink.hidden = false;
+
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  const { savedUrl, savedResult } = await loadResult();
+
+  if (savedUrl && savedUrl === tab?.url && savedResult) {
+    // Same page — restore last result without re-calling the API
+    showResult(savedResult);
+    setStatus('');
+  } else {
+    // Different page or no saved result — clear and summarize fresh
+    if (savedUrl && savedUrl !== tab?.url) {
+      await clearResult();
+      pageContent = null;
+    }
     run('summarize');
   }
 })();

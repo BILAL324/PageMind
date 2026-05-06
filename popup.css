@@ -163,6 +163,24 @@ input:focus {
   scroll-behavior: smooth;
 }
 
+.btn-reset {
+  margin-top: 10px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 5px 10px;
+  font-size: 11px;
+  color: var(--muted);
+  cursor: pointer;
+  transition: border-color 120ms, color 120ms;
+  width: 100%;
+}
+
+.btn-reset:hover {
+  border-color: var(--error);
+  color: var(--error);
+}
+
 .result-card::-webkit-scrollbar {
   width: 4px;
 }

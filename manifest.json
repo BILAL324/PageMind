@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "PageMind",
-  "version": "1.3",
+  "version": "1.4",
   "description": "Summarize any web page and ask questions about its content using OpenAI.",
   "icons": {
     "16": "icons/icon16.png",
