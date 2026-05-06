@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PageMind</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div class="shell">
+    <header class="hero">
+      <div class="logo-row">
+        <img src="icons/icon48.png" width="32" height="32" alt="PageMind" />
+        <div>
+          <span class="kicker">OpenAI</span>
+          <h1>PageMind</h1>
+        </div>
+      </div>
+    </header>
+
+    <section class="card" id="key-card">
+      <p class="hint">Enter your OpenAI API key to get started.</p>
+      <div class="row">
+        <input id="api-key-input" type="password" placeholder="sk-..." autocomplete="off" />
+        <button id="save-key-btn" class="btn primary small">Save</button>
+      </div>
+    </section>
+
+    <section class="card" id="main-card" hidden>
+      <button id="summarize-btn" class="btn primary full">Summarize this page</button>
+      <div class="row">
+        <input id="question-input" type="text" placeholder="Ask a question about this page…" />
+        <button id="ask-btn" class="btn ghost small">Ask</button>
+      </div>
+      <div id="suggestions" class="suggestions" hidden></div>
+    </section>
+
+    <section class="card result-card" id="result-card" hidden>
+      <div id="result-text" class="result-text"></div>
+    </section>
+
+    <div class="footer">
+      <p id="status" class="status"></p>
+      <a id="update-key-link" class="update-link" hidden>Update API key</a>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

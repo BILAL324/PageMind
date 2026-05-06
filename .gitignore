@@ -1,0 +1,22 @@
+# Original high-res source icon (large file, not needed by the extension)
+icons/icon.png
+
+# Environment / secrets (never commit API keys)
+.env
+.env.*
+*.key
+secrets.*
+
+# OS clutter
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Node (if tooling is added later)
+node_modules/
