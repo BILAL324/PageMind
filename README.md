@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="icons/icon128.png" alt="PageMind" width="96" height="96" />
+  <img src="icons/icon128.png" alt="PageMind" width="148" height="148" />
   <h1>PageMind</h1>
   <p>AI Web Page Summarizer & Content Extractor — Chrome Extension</p>
 </div>
