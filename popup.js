@@ -10,10 +10,58 @@ const apiKeyInput   = document.getElementById('api-key-input');
 const saveKeyBtn    = document.getElementById('save-key-btn');
 const updateKeyLink = document.getElementById('update-key-link');
 const suggestionsEl = document.getElementById('suggestions');
+const modePageBtn   = document.getElementById('mode-page-btn');
+const modeFreeBtn   = document.getElementById('mode-free-btn');
+const pageSection   = document.getElementById('page-section');
+const freeSection   = document.getElementById('free-section');
+const freeInput     = document.getElementById('free-input');
+const freeAskBtn    = document.getElementById('free-ask-btn');
+const freeChipsEl   = document.getElementById('free-chips');
 
 let apiKey = '';
 let pageContent = null;
 let activePort = null;
+let isFreeMode = false;
+
+// Free mode quick-action chips
+const FREE_ACTIONS = [
+  { label: 'LinkedIn caption',  starter: 'Write a LinkedIn caption about: ' },
+  { label: 'Check grammar',     starter: 'Fix grammar and improve: ' },
+  { label: 'Write message',     starter: 'Write a short professional message: ' },
+  { label: 'Improve writing',   starter: 'Improve this writing: ' },
+  { label: 'Summarize text',    starter: 'Summarize this text concisely: ' },
+];
+
+FREE_ACTIONS.forEach(({ label, starter }) => {
+  const btn = document.createElement('button');
+  btn.className = 'chip';
+  btn.textContent = label;
+  btn.addEventListener('click', () => {
+    freeInput.value = starter;
+    freeInput.focus();
+    freeInput.setSelectionRange(freeInput.value.length, freeInput.value.length);
+  });
+  freeChipsEl.appendChild(btn);
+});
+
+// -- Mode toggle --
+
+const setMode = (free) => {
+  isFreeMode = free;
+  modePageBtn.classList.toggle('active', !free);
+  modeFreeBtn.classList.toggle('active', free);
+  pageSection.hidden = free;
+  freeSection.hidden = !free;
+  resultCard.hidden = true;
+  resultText.textContent = '';
+  setStatus('');
+  if (!free && !pageContent) run('summarize');
+};
+
+modePageBtn.addEventListener('click', () => setMode(false));
+modeFreeBtn.addEventListener('click', () => setMode(true));
+
+// -- Helpers --
 
 const setStatus = (msg, tone = '') => {
   statusEl.textContent = msg;
@@ -24,6 +72,8 @@ const setLoading = (on) => {
   summarizeBtn.disabled = on;
   askBtn.disabled = on;
   questionInput.disabled = on;
+  freeAskBtn.disabled = on;
+  freeInput.disabled = on;
 };
 
 // -- API key --
@@ -89,7 +139,7 @@ const getPageContent = async () => {
         };
       }
     });
-  } catch (e) {
+  } catch {
     throw new Error('Cannot access this page. Try refreshing.');
   }
 
@@ -131,12 +181,11 @@ const streamFromAI = (content, prompt, mode) => {
     });
 
     port.onDisconnect.addListener(() => { activePort = null; });
-
     port.postMessage({ apiKey, pageContent: content, prompt, mode });
   });
 };
 
-// -- Silent stream collector (no UI update) --
+// -- Silent stream collector for suggestions --
 
 const collectStream = (content, mode) => {
   return new Promise((resolve) => {
@@ -174,11 +223,11 @@ const generateSuggestions = async (content) => {
     const questions = raw.split('\n').map(l => l.replace(/^[-•\d.)\s]+/, '').trim()).filter(l => l.length > 8).slice(0, 3);
     if (questions.length) renderSuggestions(questions);
   } catch {
-    // suggestions are non-critical, fail silently
+    // non-critical, fail silently
   }
 };
 
-// -- Handlers --
+// -- Page mode handler --
 
 const run = async (mode) => {
   if (!apiKey) { setStatus('Save your API key first.', 'error'); return; }
@@ -204,15 +253,40 @@ const run = async (mode) => {
 summarizeBtn.addEventListener('click', () => run('summarize'));
 
 askBtn.addEventListener('click', () => {
-  if (!questionInput.value.trim()) {
-    setStatus('Enter a question first.', 'error');
-    return;
-  }
+  if (!questionInput.value.trim()) { setStatus('Enter a question first.', 'error'); return; }
   run('ask');
 });
 
 questionInput.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') askBtn.click();
+});
+
+// -- Free mode handler --
+
+const runFree = async () => {
+  const prompt = freeInput.value.trim();
+  if (!prompt) { setStatus('Enter something first.', 'error'); return; }
+  if (!apiKey) { setStatus('Save your API key first.', 'error'); return; }
+
+  setLoading(true);
+  setStatus('Thinking…');
+  resultCard.hidden = true;
+  resultText.textContent = '';
+
+  try {
+    await streamFromAI(null, prompt, 'free');
+    setStatus('Done.', 'success');
+  } catch (err) {
+    setStatus(err.message, 'error');
+  } finally {
+    setLoading(false);
+  }
+};
+
+freeAskBtn.addEventListener('click', runFree);
+
+freeInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); runFree(); }
 });
 
 // -- Init --

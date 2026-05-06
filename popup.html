@@ -27,12 +27,30 @@
     </section>
 
     <section class="card" id="main-card" hidden>
-      <button id="summarize-btn" class="btn primary full">Summarize this page</button>
-      <div class="row">
-        <input id="question-input" type="text" placeholder="Ask a question about this page…" />
-        <button id="ask-btn" class="btn ghost small">Ask</button>
+      <!-- Mode toggle -->
+      <div class="mode-toggle">
+        <button id="mode-page-btn" class="mode-btn active">Page</button>
+        <button id="mode-free-btn" class="mode-btn">Free</button>
       </div>
-      <div id="suggestions" class="suggestions" hidden></div>
+
+      <!-- Page mode -->
+      <div id="page-section">
+        <button id="summarize-btn" class="btn primary full">Summarize this page</button>
+        <div class="row">
+          <input id="question-input" type="text" placeholder="Ask a question about this page…" />
+          <button id="ask-btn" class="btn ghost small">Ask</button>
+        </div>
+        <div id="suggestions" class="suggestions" hidden></div>
+      </div>
+
+      <!-- Free mode -->
+      <div id="free-section" hidden>
+        <div id="free-chips" class="suggestions"></div>
+        <div class="row">
+          <textarea id="free-input" placeholder="Ask anything — write a caption, check grammar, draft a message…" rows="3"></textarea>
+        </div>
+        <button id="free-ask-btn" class="btn primary full">Go</button>
+      </div>
     </section>
 
     <section class="card result-card" id="result-card" hidden>

@@ -8,44 +8,52 @@ chrome.runtime.onConnect.addListener((port) => {
     const { apiKey, pageContent, prompt, mode } = msg;
 
     try {
-      if (!pageContent || !pageContent.text) {
-        port.postMessage({ type: 'error', error: 'Could not read page content. Refresh the page and try again.' });
-        return;
-      }
+      let messages;
 
-      const systemPrompt = `You are a helpful assistant that analyzes web pages. Answer accurately and concisely based on the page content provided.
+      if (mode === 'free') {
+        messages = [
+          {
+            role: 'system',
+            content: 'You are a helpful writing and productivity assistant. Be concise, direct, and practical. No preamble or filler.'
+          },
+          { role: 'user', content: prompt }
+        ];
+      } else {
+        if (!pageContent || !pageContent.text) {
+          port.postMessage({ type: 'error', error: 'Could not read page content. Refresh the page and try again.' });
+          return;
+        }
+
+        const systemPrompt = `You are a helpful assistant that analyzes web pages. Answer accurately and concisely based on the page content provided.
 Page title: ${pageContent.title}
 Page URL: ${pageContent.url}`;
 
-      const userContent = mode === 'summarize'
-        ? `Summarize this web page following these rules strictly:
+        const userContent = mode === 'summarize'
+          ? `Summarize this web page following these rules strictly:
 1. Write a single short paragraph — maximum 200 characters total.
-2. After the paragraph, if (and only if) there are truly critical points (including facts and figures) the reader must not miss, list them as bullet points. Each bullet must be 4–7 words only. Maximum 5 bullets. If nothing is critical, omit the bullets entirely.
+2. After the paragraph, if (and only if) there are truly critical points the reader must not miss, list them as bullet points. Each bullet must be 4–7 words only. Maximum 5 bullets. If nothing is critical, omit the bullets entirely.
 3. No headings, no filler, no repetition.
 
 Page content:\n\n${pageContent.text}`
-        : mode === 'suggest'
-        ? `Based on this page content, write exactly 3 specific questions a reader would want answered. Rules: one question per line, no numbering or bullets, each question under 55 characters, no extra text.
+          : mode === 'suggest'
+          ? `Based on this page content, write exactly 3 specific questions a reader would want answered. Rules: one question per line, no numbering or bullets, each question under 55 characters, no extra text.
 
 Page content:\n\n${pageContent.text.slice(0, 4000)}`
-        : `Answer in 2-3 sentences max. Be direct and specific. No preamble.\n\nPage content:\n\n${pageContent.text}\n\nQuestion: ${prompt}`;
+          : `Answer in 2-3 sentences max. Be direct and specific. No preamble.\n\nPage content:\n\n${pageContent.text}\n\nQuestion: ${prompt}`;
 
-      const requestBody = {
-        model: MODEL,
-        max_tokens: 2024,
-        stream: true,
-        messages: [
+        messages = [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userContent }
-        ]
-      };
+        ];
+      }
+
       const response = await fetch(OPENAI_API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${apiKey}`
         },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify({ model: MODEL, max_tokens: 1024, stream: true, messages })
       });
 
       if (!response.ok) {
@@ -73,7 +81,6 @@ Page content:\n\n${pageContent.text.slice(0, 4000)}`
             port.postMessage({ type: 'done' });
             continue;
           }
-
           try {
             const parsed = JSON.parse(data);
             const text = parsed.choices?.[0]?.delta?.content;
