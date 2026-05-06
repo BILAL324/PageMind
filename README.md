@@ -1,4 +1,10 @@
-# PageMind — AI Web Page Summarizer & Content Extractor Chrome Extension
+<div align="center">
+  <img src="icons/icon128.png" alt="PageMind" width="96" height="96" />
+  <h1>PageMind</h1>
+  <p>AI Web Page Summarizer & Content Extractor — Chrome Extension</p>
+</div>
+
+---
 
 **PageMind** is a lightweight Chrome extension that uses OpenAI GPT-4o-mini to instantly summarize any web page and let you ask specific questions about its content — without leaving your browser tab.
 
