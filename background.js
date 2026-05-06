@@ -53,7 +53,13 @@ Page content:\n\n${pageContent.text.slice(0, 4000)}`
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${apiKey}`
         },
-        body: JSON.stringify({ model: MODEL, max_tokens: 1024, stream: true, messages })
+        body: JSON.stringify({
+          model: MODEL,
+          max_tokens: mode === 'summarize' ? 350 : mode === 'suggest' ? 150 : mode === 'free' ? 1024 : 400,
+          temperature: mode === 'free' ? 0.7 : 0.3,
+          stream: true,
+          messages
+        })
       });
 
       if (!response.ok) {
